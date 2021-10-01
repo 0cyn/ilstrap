@@ -1,13 +1,13 @@
 from setuptools import setup
 
 setup(name='ilstrap',
-      version='0.1.1',
+      version='0.2.0',
       description='IDA Loader Installer',
       long_description='file: README.md',
       long_description_content_type='text/markdown',
       author='kritanta',
       url='https://github.com/kritantadev/ilstrap',
-      install_requires=[],
+      install_requires=['requests'],
       packages=['ilstrap'],
       package_dir={
             'ilstrap': 'src/ilstrap',
@@ -19,5 +19,6 @@ setup(name='ilstrap',
             'Programming Language :: Python :: 3',
             'License :: OSI Approved :: MIT License',
             'Operating System :: OS Independent'
-      ]
+      ],
+      scripts=['bin/ilstrap']
       )

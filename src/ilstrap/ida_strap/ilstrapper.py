@@ -26,6 +26,6 @@ def loadmods(name):
     ilstrap_dir = this_dir + path.sep + "ilstrap" + path.sep + name
     sys.path.insert(0, ilstrap_dir)
 
-
+# since IDA expects every file here to be an IDA Loader, conform to that API to avoid errors
 def accept_file(fd, fname):
     return 0

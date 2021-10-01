@@ -25,3 +25,7 @@ def loadmods(name):
     # figure out where ilstrap/ is
     ilstrap_dir = this_dir + path.sep + "ilstrap" + path.sep + name
     sys.path.insert(0, ilstrap_dir)
+
+
+def accept_file(fd, fname):
+    return 0

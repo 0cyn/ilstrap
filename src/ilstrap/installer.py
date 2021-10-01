@@ -5,6 +5,7 @@ import ctypes, sys, os
 from .shared import get_package_filepath
 import shutil
 import requests
+from urllib import request
 import tarfile
 import tempfile
 import shutil
@@ -36,6 +37,13 @@ class IDA:
         ilstrap_dir_name = self.loaders_dir + path.sep + 'ilstrap'
         if not path.isdir(ilstrap_dir_name):
             os.mkdir(ilstrap_dir_name)
+
+    @staticmethod
+    def get_gh_repo_tarball(given):
+        url = f'https://api.github.com/repos/{given}/releases/latest'
+        response: dict = json.load(request.urlopen(url))
+        tar_url = response['tarball_url']
+        return tar_url
 
     def install_loader_from_url_tarball(self, url):
         response = requests.get(url, stream=True)
@@ -83,15 +91,22 @@ if __name__ == "__main__":
     elif platform == "darwin":
         pass
     elif platform == "win32":
-        print(sys.argv)
         if Windows.is_admin():
+            tar_url = sys.argv[1]
+            if sys.argv[1] == '--gh':
+                gh = sys.argv[2]
+                tar_url = IDA.get_gh_repo_tarball(gh)
+                print('Successfully found repo')
             pathname = Windows.get_path()
             ida = IDA(pathname)
             if not ida.confirm_is_ida():
                 print('Path is not is not IDA install directory!')
                 exit(1)
+            print('Got IDA Dir')
+            print('Copying ILStrap bootstrapper')
             ida.install_ilstrap()
-            ida.install_loader_from_url_tarball(sys.argv[1])
+            print('Installing Loader')
+            ida.install_loader_from_url_tarball(tar_url)
         else:
             print(f'This scripts needs to be ran as admin')
 

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='ilstrap',
-      version='0.2.0',
+      version='0.3.0',
       description='IDA Loader Installer',
       long_description='file: README.md',
       long_description_content_type='text/markdown',

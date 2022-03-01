@@ -1,3 +1,4 @@
+import re
 from sys import platform
 from .windows import Windows
 from os import path, listdir
@@ -12,6 +13,8 @@ import shutil
 import json
 import string
 import random
+
+DARWIN_IDA_INSTALL = re.compile(r"^IDA Pro \d+\.\d+")
 
 
 def line_prepender(filename, line):
@@ -78,8 +81,21 @@ class IDA:
         tar_url = response['tarball_url']
         return tar_url
 
-    def install_from_local_dir(self, outpath):
+    @staticmethod
+    def guess_ida_install_dir():
+        if sys.platform == 'darwin':
+            possible_ida = [candidate for candidate
+                            in os.listdir('/Applications')
+                            if DARWIN_IDA_INSTALL.match(candidate)]
 
+            for possible in possible_ida:
+                idabin = path.join('/Applications', possible, 'idabin')
+                if path.islink(idabin):
+                    return path.join('/Applications', possible, os.readlink(idabin))
+
+        return None
+
+    def install_from_local_dir(self, outpath):
         config = None
 
         with open(outpath + path.sep + 'istrap.json') as conf:
@@ -181,6 +197,7 @@ class IDA:
                 break
         # os.remove(outpath)
 
+
 def main():
 
     local = False
@@ -200,11 +217,12 @@ def main():
             tar_url = IDA.get_gh_repo_tarball(gh)
             print('Successfully found repo')
 
+    guess_path = IDA.guess_ida_install_dir()
 
     if platform == "linux" or platform == "linux2":
-        pathname = input('Enter IDA Install Location \n> ')
+        pathname = input(f'Enter IDA Install Location \n[{guess_path}] > ')
     elif platform == "darwin":
-        pathname = input('Enter IDA Install Location \n> ')
+        pathname = input(f'Enter IDA Install Location \n[{guess_path}] > ')
     elif platform == "win32":
         if not Windows.is_admin():
             print('On Windows, this script needs to be ran from an administrator command prompt')
@@ -215,6 +233,9 @@ def main():
 
         print('Unknown OS')
         exit(2)
+
+    if guess_path and not pathname:
+        pathname = guess_path
 
     ida = IDA(pathname)
 
@@ -230,6 +251,7 @@ def main():
     else:
         ida.install_loader_from_url_tarball(tar_url)
     print('Finished.')
+
 
 if __name__ == "__main__":
     main()

@@ -1,8 +1,7 @@
-from os import path, listdir
 import sys
+from os import path
 
 import idaapi
-import ida_hexrays
 
 """
 Structure:
@@ -33,6 +32,7 @@ def loadmods(name):
 # since IDA expects every file here to be an IDA Loader, conform to that API to avoid errors
 def accept_file(fd, fname):
     return 0
+
 
 # same for plugins, we use this file for both
 

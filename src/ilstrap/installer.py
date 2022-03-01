@@ -1,18 +1,20 @@
-import re
-from sys import platform
-from .windows import Windows
-from os import path, listdir
-import sys
+import json
 import os
-from .shared import get_package_filepath
-import requests
-from urllib import request
+import random
+import re
+import shutil
+import string
+import sys
 import tarfile
 import tempfile
-import shutil
-import json
-import string
-import random
+from os import path, listdir
+from sys import platform
+from urllib import request
+
+import requests
+
+from .shared import get_package_filepath
+from .windows import Windows
 
 DARWIN_IDA_INSTALL = re.compile(r"^IDA Pro \d+\.\d+")
 
@@ -141,7 +143,6 @@ class IDA:
                     file_fqp = path.join(mod_fqp, fn)
                     shutil.copyfile(file_fqp, mod_outdir + path.sep + fn)
 
-
         # plugin
 
         if 'plugin-modules' in config:
@@ -181,7 +182,6 @@ class IDA:
                     file_fqp = path.join(mod_fqp, fn)
                     shutil.copyfile(file_fqp, mod_outdir + path.sep + fn)
 
-
     def install_loader_from_url_tarball(self, url):
         response = requests.get(url, stream=True)
         file = tarfile.open(fileobj=response.raw, mode="r|gz")
@@ -189,7 +189,7 @@ class IDA:
             random.choice(string.ascii_lowercase) for i in range(10))
         file.extractall(path=outpath)
         # iterate the files in that directory
-        
+
         for filename in listdir(outpath):
             fqp = path.join(outpath, filename)
             if 'istrap.json' in listdir(fqp):
@@ -199,7 +199,6 @@ class IDA:
 
 
 def main():
-
     local = False
 
     tar_url = ''

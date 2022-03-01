@@ -1,6 +1,8 @@
-from .shared import get_package_filepath
+import ctypes
 import subprocess
-import ctypes, sys
+
+from .shared import get_package_filepath
+
 
 class Windows:
     def __init__(self):

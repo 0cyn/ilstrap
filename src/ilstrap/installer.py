@@ -1,26 +1,19 @@
 import argparse
-import dataclasses
-import json
-import os
-import random
-import re
-import shutil
-import string
-import sys
 import pkgutil
-import tarfile
-import tempfile
-import typing
-from os import path, listdir
+import re
+import sys
+from os import path
 from sys import platform
-from urllib import request
 
-from .windows import Windows
 from .shared import *
+from .windows import Windows
 
 DARWIN_APPLICATIONS = "/Applications"
 DARWIN_IDA_INSTALL = re.compile(r"^IDA Pro \d+\.\d+")
 GITHUB_REPO_PATTERN = re.compile(r"(\w+)/(\w+)")
+
+IDA_MODULES = ['__init__.py', 'shared.py', 'environment.py']
+IDA_SHIMS = {'plugins': 'istrap_plugin.py', 'loaders': 'istrap_loader.py'}
 
 
 class IDA:
@@ -79,20 +72,24 @@ class IDA:
         if not path.isdir(self.install_path):
             os.mkdir(self.install_path)
 
-        istraper = pkgutil.get_data('ilstrap', 'ida_strap/istrapper.py')
-        assert istraper
+        for shim in IDA_SHIMS:
+            shim_destination_path = path.join(self.ida_dir(shim), IDA_SHIMS[shim])
+            with open(shim_destination_path, 'wb') as ida_shim:
+                shim_source_path = path.join('ida_strap', IDA_SHIMS[shim])
+                print(f"Copying {shim_source_path} -> {shim_destination_path}")
+                ida_shim_data = pkgutil.get_data('ilstrap', shim_source_path)
+                assert ida_shim_data
 
-        common_data = pkgutil.get_data('ilstrap', 'shared.py')
-        assert common_data
+                ida_shim.write(ida_shim_data)
 
-        with open(path.join(self.ida_dir('plugins'), f'istrapper.py'), 'wb') as output_istrapper:
-            output_istrapper.write(istraper)
+        for ida_module in IDA_MODULES:
+            ida_module_destination = path.join(self.install_path, ida_module)
+            print(f"Copying {ida_module} -> {ida_module_destination}")
+            with open(ida_module_destination, 'wb') as ida_module_file:
+                ida_module_data = pkgutil.get_data('ilstrap', ida_module)
+                assert ida_module_data
 
-        with open(path.join(self.install_path, '__init__.py'), 'w') as module_marker:
-            module_marker.write(str())
-
-        with open(path.join(self.install_path, 'shared.py'), 'wb') as common_file:
-            common_file.write(common_data)
+                ida_module_file.write(ida_module_data)
 
     def install(self, project: IStrapProject, dev_mode=False):
         assert self.configuration
@@ -111,7 +108,7 @@ def main():
     parser.add_argument('project_path', type=str, nargs='?', default=os.curdir,
                         help='the location of the project, where istrap.json is (uses cwd by default)')
     parser.add_argument('--gh', dest='repo_url', type=str, default=None,
-                        help="location of the istrapper.py to use (uses ilstrap version by default)")
+                        help="location of the istrap_plugin.py to use (uses ilstrap version by default)")
     parser.add_argument('--ida', dest='ida_path', type=str, default=IDA.guess_ida_install_dir(),
                         help="location of the ida install (will ask interactively with a guess by default)")
     parser.add_argument('--dev_mode', action='store_true')

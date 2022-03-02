@@ -10,17 +10,12 @@ from urllib import request
 
 
 @dataclasses.dataclass
-class IStrapProjectEntry:
-    path: str
-    modules: list[str]
-
-
-@dataclasses.dataclass
 class IStrapProject:
     name: str
     version: str
-    loaders: list[IStrapProjectEntry]
-    plugins: list[IStrapProjectEntry]
+    load_paths: list[str] = dataclasses.field(default_factory=list)
+    loaders: list[str] = dataclasses.field(default_factory=list)
+    plugins: list[str] = dataclasses.field(default_factory=list)
 
     _workdir: typing.Optional[tempfile.TemporaryDirectory] = dataclasses.field(repr=False, default=None)
     _path: typing.Optional[str] = dataclasses.field(repr=False, default=None)
@@ -39,7 +34,10 @@ class IStrapProject:
         target_path = path.join(install_path, self.name)
 
         if overwrite and path.exists(target_path):
-            shutil.rmtree(target_path)
+            if not path.isdir(target_path):
+                os.unlink(target_path)
+            else:
+                shutil.rmtree(target_path)
 
         return target_path
 
@@ -65,9 +63,8 @@ class IStrapProject:
 
     @property
     def module_paths(self):
-        for project in [project_entry for project_entry in self.plugins + self.loaders]:
-            for module_path in project.modules:
-                yield path.realpath(path.join(self._path, module_path))
+        for module_path in self.load_paths:
+            yield path.realpath(path.join(self._path, module_path))
 
     @staticmethod
     def is_project_path(project_path):
@@ -76,10 +73,7 @@ class IStrapProject:
     @classmethod
     def from_file(cls, file_path):
         with open(file_path, 'r') as config_file:
-            config = json.load(config_file)
-            config['loaders'] = [IStrapProjectEntry(**entry) for entry in config['loaders']]
-            config['plugins'] = [IStrapProjectEntry(**entry) for entry in config['plugins']]
-            project = IStrapProject(**config)
+            project = IStrapProject(**json.load(config_file))
             project._path = path.dirname(file_path)
             return project
 
